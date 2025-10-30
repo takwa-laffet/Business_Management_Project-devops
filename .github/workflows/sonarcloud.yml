@@ -1,16 +1,13 @@
-name: SonarCloud analysis
+name: DevSecOps Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
-  build:
-    name: Build and analyze
+  build-and-analyze:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,24 +15,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Setup JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Maven packages
+      - name: Cache Maven dependencies
         uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-maven
 
-      - name: Build and analyze
+      - name: Build with Maven
+        run: mvn -B clean verify
+
+      - name: SonarCloud Analysis
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-          -Dsonar.projectKey=6fdf9b0f7568ae111029ecf5b778b91a9151bec5 \
-          -Dsonar.organization=takwa-laffet \
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn sonar:sonar \
+          -Dsonar.projectKey=BusinessProject \
+          -Dsonar.organization=YOUR_ORG_NAME \
           -Dsonar.host.url=https://sonarcloud.io
